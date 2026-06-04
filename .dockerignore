@@ -1,0 +1,10 @@
+# Ignore heavy folders to prevent Docker crashes
+models/
+datasets/
+logs/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.env

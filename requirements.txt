@@ -1,0 +1,42 @@
+# Python Dependencies for Agentic LLM Compression System
+
+# Core utilities
+python-dotenv
+pydantic
+
+# Web framework - FastAPI (Microservices)
+fastapi
+uvicorn[standard]
+httpx
+
+# Web framework - Django (Dashboard UI)
+django>=4.2
+requests
+django-cors-headers
+
+# ML & NLP
+torch
+transformers
+datasets
+huggingface-hub
+
+# Google Gemini API
+google-generativeai
+
+# Utilities
+numpy
+scikit-learn
+tqdm
+redis
+accelerate
+kubernetes
+
+# Development
+pytest
+pytest-asyncio
+black
+flake8
+isort
+
+# Logging & Monitoring
+python-json-logger

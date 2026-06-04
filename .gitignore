@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.production
+secrets.yaml
+
+# Django
+*.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# ML Models (large files)
+models/*/
+!models/.gitkeep
+datasets/*.json
+datasets/*.txt
+!datasets/.gitkeep
+
+# Logs
+logs/*.log
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Redis
+dump.rdb
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Distribution
+*.tar.gz
+*.whl

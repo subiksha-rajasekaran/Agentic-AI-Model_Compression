@@ -1,0 +1,133 @@
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - compression-network
+
+  orchestrator:
+    build: .
+    command: python microservices/orchestrator/src/main.py
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - model-cache:/app/models
+      - dataset-cache:/app/datasets
+    environment:
+      - PYTHONPATH=/app:/app/libs:/app/microservices/orchestrator/src:/app/microservices/distillation/src:/app/microservices/pruning/src:/app/microservices/quantization/src
+      - REDIS_URL=redis://redis:6379/0
+      - DISTILLATION_SERVICE_URL=http://distillation:8001
+      - PRUNING_SERVICE_URL=http://pruning:8004
+      - QUANTIZATION_SERVICE_URL=http://quantization:8005
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - compression-network
+    restart: unless-stopped
+
+  distillation:
+    build: .
+    command: python microservices/distillation/src/app.py
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+      - model-cache:/app/models
+      - dataset-cache:/app/datasets
+    environment:
+      - PYTHONPATH=/app:/app/libs:/app/microservices/distillation/src
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+    networks:
+      - compression-network
+    restart: unless-stopped
+
+  pruning:
+    build: .
+    command: python microservices/pruning/src/app.py
+    ports:
+      - "8004:8004"
+    volumes:
+      - .:/app
+      - model-cache:/app/models
+    environment:
+      - PYTHONPATH=/app:/app/libs:/app/microservices/pruning/src
+      - HF_TOKEN=${HF_TOKEN}
+    networks:
+      - compression-network
+    restart: unless-stopped
+
+  quantization:
+    build: .
+    command: python microservices/quantization/src/app.py
+    ports:
+      - "8005:8005"
+    volumes:
+      - .:/app
+      - model-cache:/app/models
+    environment:
+      - PYTHONPATH=/app:/app/libs:/app/microservices/quantization/src
+      - HF_TOKEN=${HF_TOKEN}
+    networks:
+      - compression-network
+    restart: unless-stopped
+
+  web_ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    command: python microservices/web_ui/manage.py runserver 0.0.0.0:8003
+    ports:
+      - "8003:8003"
+    volumes:
+      - .:/app
+      - model-cache:/app/models
+    environment:
+      - PYTHONPATH=/app:/app/libs
+      - ORCHESTRATOR_SERVICE_URL=http://orchestrator:8000
+      - DISTILLATION_SERVICE_URL=http://distillation:8001
+      - PRUNING_SERVICE_URL=http://pruning:8004
+      - QUANTIZATION_SERVICE_URL=http://quantization:8005
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+    depends_on:
+      - orchestrator
+      - distillation
+      - pruning
+      - quantization
+    networks:
+      - compression-network
+    restart: unless-stopped
+
+  prompt-compression:
+    build:
+      context: ./microservices/prompt-compression
+      dockerfile: Dockerfile
+    command: python app.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./microservices/prompt-compression:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - compression-network
+    restart: unless-stopped
+
+networks:
+  compression-network:
+    driver: bridge
+
+volumes:
+  model-cache:
+  dataset-cache:
